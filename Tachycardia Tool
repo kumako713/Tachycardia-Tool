@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ACLS Timer Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .header-text {
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      background-color: #e53935;
+      padding: 10px;
+      text-align: center;
+      border-radius: 6px;
+    }
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #ekgModal button {
+      margin: 5px;
+    }
+    #clock {
+      font-size: 18px;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header-text">ACLS Timer Tool<br>Tachycardia</div>
+<div id="clock"></div>
+
+<!-- 性別與年齡 -->
+<div class="column">
+  <div>
+    <button onclick="toggleGender('male')" id="maleBtn">Male</button>
+    <button onclick="toggleGender('female')" id="femaleBtn">Female</button>
+    <input type="number" id="ageInput" placeholder="年齡" style="width: 60px;">
+  </div>
+</div>
+
+<!-- 藥物與處置計數 -->
+<div class="column">
+  <div>Adenosine: <span id="adenosineCount">0</span></div>
+  <div>Amiodarone: <span id="amioCount">0</span></div>
+  <div>Procainamide: <span id="procainamideCount">0</span></div>
+  <div>Sync. Shock: <span id="shockCount">0</span></div>
+</div>
+
+<!-- 給藥與處置按鈕 -->
+<div class="column">
+  <button onclick="giveAdenosine()" id="adenosineBtn">Adenosine</button>
+  <button onclick="giveAmiodarone()" id="amioBtn">Amiodarone</button>
+  <button onclick="giveProcainamide()" id="procainamideBtn">Procainamide</button>
+  <button onclick="recordShock()">⚡️Sync. Shock⚡️</button>
+  <button onclick="recordEvent('IV')">I.V.</button>
+  <button onclick="recordEvent('Valsalva')">Valsalva</button>
+  <button onclick="showEKGOptions()">EKG</button>
+</div>
+
+<!-- 生命徵象 -->
+<div class="column">
+  <label>RR: <input type="text" id="rrInput" /></label>
+  <label>HR: <input type="text" id="hrInput" /></label>
+  <label>BP: <input type="text" id="bpSysInput" style="width:40px;"> / <input type="text" id="bpDiaInput" style="width:40px;"></label>
+  <label>SpO2: <input type="text" id="spo2Left" style="width:40px;"> → <input type="text" id="spo2Right" style="width:40px;">%</label>
+  <label>BT: <input type="text" id="btInput" style="width:60px;">°C</label>
+</div>
+
+<!-- 主訴與病史 -->
+<div class="column">
+  <label>主訴：<textarea id="chiefComplaint"></textarea></label>
+  <label>病史/過敏史：<textarea id="history"></textarea></label>
+  <label>其他處置/說明：<textarea id="otherNotes"></textarea></label>
+</div>
+
+<!-- 節律選單 -->
+<div id="ekgModal" style="display:none;">
+  <p>請選擇節律：</p>
+  <button onclick="recordEvent('VT')">VT</button>
+  <button onclick="recordEvent('VF')">VF</button>
+  <button onclick="recordEvent('PSVT')">PSVT</button>
+  <button onclick="recordEvent('Torsades')">Torsades</button>
+  <button onclick="recordEvent('Sinus T')">Sinus T</button>
+  <button onclick="recordEvent('AF')">AF</button>
+  <button onclick="recordEvent('A-fib')">A-fib</button>
+</div>
+
+<!-- Log 紀錄區 -->
+<div class="column">
+  <h3>處置紀錄</h3>
+  <div id="log"></div>
+</div>
+
+<script>
+let startTime = new Date();
+let adenosineCount = 0;
+let amioCount = 0;
+let procainamideGiven = false;
+let shockCount = 0;
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById("clock").innerText = "Current Time：" + now.toLocaleString('zh-TW', { hour12: false });
+}
+setInterval(updateClock, 1000); updateClock();
+
+function toggleGender(selected) {
+  document.getElementById("maleBtn").classList.remove("selected");
+  document.getElementById("femaleBtn").classList.remove("selected");
+  document.getElementById(selected + "Btn").classList.add("selected");
+}
+
+function recordEvent(event) {
+  const now = new Date();
+  const elapsed = Math.floor((now - startTime) / 1000);
+  const timeStamp = `${Math.floor(elapsed / 60).toString().padStart(2, '0')}:${(elapsed % 60).toString().padStart(2, '0')}`;
+  const log = document.getElementById("log");
+  const div = document.createElement("div");
+  div.innerText = `[${timeStamp}] ${event}`;
+  log.appendChild(div);
+}
+
+function giveAdenosine() {
+  adenosineCount++;
+  if (adenosineCount === 1) {
+    alert("6mg IVP, NS flash");
+    recordEvent("Adenosine 6mg IVP");
+  } else if (adenosineCount === 2) {
+    alert("12mg IVP, NS flash");
+    recordEvent("Adenosine 12mg IVP");
+    document.getElementById("adenosineBtn").disabled = true;
+  }
+  document.getElementById("adenosineCount").innerText = adenosineCount;
+}
+
+function giveAmiodarone() {
+  amioCount++;
+  if (amioCount === 1) {
+    alert("150mg 10min");
+    recordEvent("Amiodarone 150mg 10min");
+  } else if (amioCount === 2) {
+    alert("1 mg/ min / 6 hr");
+    recordEvent("Amiodarone 1 mg/ min / 6 hr");
+    document.getElementById("amioBtn").disabled = true;
+  }
+  document.getElementById("amioCount").innerText = amioCount;
+}
+
+function giveProcainamide() {
+  if (!procainamideGiven) {
+    alert("20-50mg/ min");
+    recordEvent("Procainamide 20-50mg/ min");
+    document.getElementById("procainamideBtn").disabled = true;
+    procainamideGiven = true;
+    document.getElementById("procainamideCount").innerText = "1";
+  }
+}
+
+function recordShock() {
+  shockCount++;
+  recordEvent("⚡️Sync. Shock⚡️");
+  document.getElementById("shockCount").innerText = shockCount;
+}
+
+function showEKGOptions() {
+  document.getElementById("ekgModal").style.display = "block";
+}
+</script>
+
+</body>
+</html>
