@@ -5,17 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ACLS Timer Tool - Tachycardia</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .center-row { display: flex; justify-content: center; margin-bottom: 10px; }
-    .split-row { display: flex; gap: 30px; justify-content: center; margin-bottom: 10px; }
-    .column { display: flex; flex-direction: column; gap: 10px; }
-    .section-title { font-size: 24px; font-weight: bold; background: #e53935; color: white; padding: 10px; text-align: center; border-radius: 6px; }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: auto; }
+    .center-row { display: flex; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+    .split-row { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+    .column { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 280px; }
+    .section-title { font-size: 24px; font-weight: bold; background: #e53935; color: white; padding: 10px; text-align: center; border-radius: 6px; width: 100%; }
     .toggled { background-color: #555; color: white; text-decoration: line-through; }
-    button { padding: 8px 12px; border-radius: 6px; cursor: pointer; border: none; }
+    button { padding: 8px 12px; border-radius: 6px; cursor: pointer; border: none; white-space: nowrap; }
     textarea, input { padding: 5px; font-size: 14px; }
     #log { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px; }
     #ekgModal { display: none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: white; padding: 20px; border: 2px solid #999; border-radius: 8px; z-index: 9999; }
     #ekgModal button { margin: 5px; }
+    .yellow-btn { background-color: #fbc02d; color: black; }
+    .red-bold-btn { background-color: #e53935; color: yellow; font-weight: bold; }
+    .green-btn { background-color: #40e0d0; color: black; }
+    .blue-bold-btn { background-color: #4fc3f7; color: black; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -30,19 +34,19 @@
 
 <!-- 第三列：左欄與右欄 -->
 <div class="split-row">
-  <!-- 左欄：藥物計次與生命徵象 -->
+  <!-- 左欄 -->
   <div class="column">
     <div>Adenosine: <span id="adenosineCount">0</span></div>
     <div>Amiodarone: <span id="amioCount">0</span></div>
     <div>Procainamide: <span id="procainamideCount">0</span></div>
     <div>Sync. Shock: <span id="shockCount">0</span></div>
-    <label>RR: <input type="text" id="rrInput"></label>
-    <label>HR: <input type="text" id="hrInput"></label>
-    <label>BP: <input type="text" id="bpSysInput" style="width:40px;"> / <input type="text" id="bpDiaInput" style="width:40px;"></label>
-    <label>SpO2: <input type="text" id="spo2Left" style="width:40px;"> → <input type="text" id="spo2Right" style="width:40px;">%</label>
-    <label>BT: <input type="text" id="btInput" style="width:60px;">°C</label>
+    <label>RR <input type="text" id="rrInput"></label>
+    <label>HR <input type="text" id="hrInput"></label>
+    <label>BP <input type="text" id="bpSysInput" style="width:40px;"> / <input type="text" id="bpDiaInput" style="width:40px;"></label>
+    <label>SpO2 <input type="text" id="spo2Left" style="width:40px;"> → <input type="text" id="spo2Right" style="width:40px;">%</label>
+    <label>BT <input type="text" id="btInput" style="width:60px;">°C</label>
   </div>
-  <!-- 右欄：主訴與病史 -->
+  <!-- 右欄 -->
   <div class="column">
     <label>主訴：<textarea id="chiefComplaint"></textarea></label>
     <label>病史/過敏史：<textarea id="history"></textarea></label>
@@ -54,13 +58,13 @@
 <div class="split-row">
   <!-- 左欄：處置按鈕 -->
   <div class="column">
-    <button onclick="giveAdenosine()" id="adenosineBtn">Adenosine</button>
-    <button onclick="giveAmiodarone()" id="amioBtn">Amiodarone</button>
-    <button onclick="giveProcainamide()" id="procainamideBtn">Procainamide</button>
-    <button onclick="recordShock()">⚡️Sync. Shock⚡️</button>
-    <button onclick="recordEvent('IV')">I.V.</button>
-    <button onclick="recordEvent('Valsalva')">Valsalva</button>
-    <button onclick="showEKGModal()">EKG</button>
+    <button class="yellow-btn" onclick="recordEvent('Adenosine')">Adenosine</button>
+    <button class="yellow-btn" onclick="recordEvent('Amiodarone')">Amiodarone</button>
+    <button class="yellow-btn" onclick="recordEvent('Procainamide')">Procainamide</button>
+    <button class="red-bold-btn" onclick="recordEvent('⚡️Sync. Shock⚡️')">⚡️Sync. Shock⚡️</button>
+    <button class="green-btn" onclick="recordEvent('IV')">I.V.</button>
+    <button class="green-btn" onclick="recordEvent('Valsalva')">Valsalva</button>
+    <button class="green-btn" onclick="showEKGModal()">EKG</button>
   </div>
   <!-- 右欄：5H5T -->
   <div class="column">
@@ -79,7 +83,7 @@
 
 <!-- 第五列：ISBAR -->
 <div class="center-row">
-  <button onclick="showISBAR()">ISBAR</button>
+  <button class="blue-bold-btn" onclick="showISBAR()">ISBAR</button>
 </div>
 
 <!-- 第六列：Reset -->
@@ -133,7 +137,29 @@ function resetLog() {
   document.querySelectorAll('input, textarea').forEach(el => el.value = '');
 }
 function showISBAR() {
-  alert("ISBAR 匯出完成！（實際功能請整合原始版本JS）");
+  const gender = document.getElementById("maleBtn")?.classList.contains("selected") ? "男性" : document.getElementById("femaleBtn")?.classList.contains("selected") ? "女性" : "（未選）";
+  const age = document.getElementById("ageInput")?.value || "？";
+  const chief = document.getElementById("chiefComplaint")?.value || "??";
+  const rrValue = document.getElementById("rrInput")?.value || "??";
+  const hrValue = document.getElementById("hrInput")?.value || "??";
+  const bpSys = document.getElementById("bpSysInput")?.value || "??";
+  const bpDia = document.getElementById("bpDiaInput")?.value || "??";
+  const spo2Left = document.getElementById("spo2Left")?.value || "??";
+  const spo2Right = document.getElementById("spo2Right")?.value || "??";
+  const history = document.getElementById("history")?.value || "（未填寫）";
+
+  const logs = Array.from(document.querySelectorAll("#log div"))
+    .map(div => div.textContent)
+    .join("\n");
+
+  const isbar = `【ISBAR 彙整】\n
+                 I：\n醫師好，我是署P91。\n\n
+                 S：\n${gender}患者 ${age} 歲，${chief}，RR ${rrValue}，HR ${hrValue}，BP ${bpSys}/${bpDia}，SpO₂ ${spo2Left}→${spo2Right}%\n。\n\n
+                 B：\n病史/過敏史： ${history}。\n\n
+                 A：\n${logs}\n\n
+                 R：\n建議：請自行評估。`;
+
+  alert(isbar);
 }
 </script>
 
